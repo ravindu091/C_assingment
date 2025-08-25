@@ -64,16 +64,16 @@ void inputFileRead(){
 int addMoment(Player* player, char direction){
     switch(direction){
         case 'n':
-            *player.width -=1;
+            player->width -=1;
             break;
         case 'e':
-            *player.length +=1;
+            player->length +=1;
             break;
         case 's':
-            *player.width += 1;
-            break:
+            player->width += 1;
+            break;
         case 'w':
-            *player.length -= 1;
+            player->length -= 1;
             break;
         default:
             return 1;
@@ -82,12 +82,14 @@ int addMoment(Player* player, char direction){
 }
 
 int playerMoment(Player* player,int diceNumber){
-    int state = *player.state`;
+    int state = player->state;
     if(state = 1){
         if(diceNumber == 6){
-            addMoment(player,*player.startingDirection);
+            addMoment(player,player->startingDirection);
+            player->state = 2;
         }
-        //No error with 0
+        drwCount += 1;
+        //No error with 1
         return 0;
     }
 }
@@ -96,14 +98,20 @@ void momentPlay(int number){
     int stateCode;
     switch(drwCount){
         case 1:
-            (playerMoment(*ptrPlayer1,number)) ? break : printf('a');
+            if(playerMoment(ptrPlayer1,number)){
+                break;
+            }
         
         case 2:
-            (playerMoment(*ptrPlayer2,number)) ? break : printf('b');
-            break;
+            if(playerMoment(ptrPlayer2,number)){
+                break;
+            }
+           
         case 3:
-            (playerMoment(*ptrPlayer1,number)) ? break : printf('c');
-            break;
+            if(playerMoment(ptrPlayer1,number)){
+                break;
+            }
+           
         default:
             break;
     } 
