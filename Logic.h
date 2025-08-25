@@ -53,7 +53,7 @@ void definePlayerPoint(){
    player3.throwNumber = 0;
    player3.startingDirection = 'e';
    player3.startPositionWidth = 9;
-   player3.startPositionLength = 17;
+   player3.startPositionLength = 16;
 }
 
 
@@ -81,27 +81,28 @@ int addMoment(Player* player, char direction){
     }
 }
 
-void playerMoment(Player* player,int diceNumber){
-    int state = *player.state;
+int playerMoment(Player* player,int diceNumber){
+    int state = *player.state`;
     if(state = 1){
         if(diceNumber == 6){
             addMoment(player,*player.startingDirection);
         }
-        
+        //No error with 0
+        return 0;
     }
 }
 
 void momentPlay(int number){
-    
+    int stateCode;
     switch(drwCount){
         case 1:
-            playerMoment(*ptrPlayer1,number);
-            break;
+            (playerMoment(*ptrPlayer1,number)) ? break : printf('a');
+        
         case 2:
-            playerMoment(*ptrPlayer2 , number);
+            (playerMoment(*ptrPlayer2,number)) ? break : printf('b');
             break;
         case 3:
-            playerMoment(*ptrPlayer3,number);
+            (playerMoment(*ptrPlayer1,number)) ? break : printf('c');
             break;
         default:
             break;
