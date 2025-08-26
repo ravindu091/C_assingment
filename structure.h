@@ -1,7 +1,14 @@
+enum Direction {
+    NORTH , EAST, SOUTH, WEST
+};
+enum Type{
+    WALL, POLE, STAIR, START, FREE
+};
+
 typedef struct
 {
     char floor;
-    char direction;
+    enum Direction direction;
     char startingDirection;
     char throwNumber;
     short width;
@@ -11,4 +18,9 @@ typedef struct
     short startPositionLength;
 
     
-}Player;
+} Player;
+
+typedef struct{
+    enum Type type;
+    short state;
+} Cell;

@@ -11,8 +11,10 @@ Player *ptrPlayer1 = &player1;
 Player *ptrPlayer2 = &player2;    
 Player *ptrPlayer3 = &player3;
 
-int floor1[25][10]={};
-int floor2[25][10]={};
+//Floor define
+Cell floor1[10][25];
+Cell floor2[10][25];
+Cell floor3[10][9];
 
 int drwCount = 1;
 
@@ -24,37 +26,38 @@ int drawDies(){
 void definePlayerPoint(){
    //player 1
    player1.floor = 0;
-   player1.direction = 'n';
+   player1.direction = 0;
    player1.width = 6;
    player1.length = 12;
    player1.state = 1;
    player1.throwNumber = 0;
-   player1.startingDirection = 'n';
+   player1.startingDirection = NORTH;
    player1.startPositionWidth = 6;
    player1.startPositionLength = 12;
 
    //player 2
    player2.floor = 0;
-   player2.direction = 'w';
+   player2.direction = 3;
    player2.width = 9;
    player2.length = 8;
    player2.state = 1;
    player2.throwNumber = 0;
-   player2.startingDirection = 'w';
+   player2.startingDirection = WEST;
    player2.startPositionWidth = 9;
    player2.startPositionLength = 8;
 
    //player 3
    player3.floor = 0;
-   player3.direction = 'e';
+   player3.direction = 1;
    player3.width = 9;
    player3.length = 17;
    player3.state = 1;
    player3.throwNumber = 0;
-   player3.startingDirection = 'e';
+   player3.startingDirection = EAST;
    player3.startPositionWidth = 9;
    player3.startPositionLength = 16;
 }
+
 
 
 void inputFileRead(){
@@ -117,3 +120,16 @@ void momentPlay(int number){
     } 
 
 }
+
+//Floor initialize 
+
+void floorInitialize (){
+    for(int x = 0; x < 10; x++ ){
+        for(int l = 0; l < 25; l++){
+            floor1[x][l].type = FREE;
+            floor2[x][l].type = FREE;
+
+        }
+    }
+}
+
