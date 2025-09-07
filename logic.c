@@ -5,7 +5,8 @@
 Cell floor1[10][25];
 Cell floor2[10][25];
 Cell floor3[10][9];
-
+//stair
+Stair* stairHead = NULL;
 
 Cell* cell(int floorNumber, int widthNumber,int lengthNumber ){
     if(floorNumber == 2){
@@ -107,10 +108,47 @@ int loadWalls(){
         }
     
     }
+    fclose(fp);
     return validated;
 
 }
+// Stair* createNode(int data) {
+//     Node* newNode = (Node*)malloc(sizeof(Node)); // Allocate memory for the new node
+//     if (newNode == NULL) {
+//         printf("Memory allocation failed!\n");
+//         exit(1); // Exit if memory allocation fails
+//     }
+//     newNode->data = data; // Assign data to the new node
+//     newNode->next = NULL; // Initialize next pointer to NULL
+//     return newNode;
+// }
+Stair *createStair(int data[6]){
+    Stair* newStair = (Stair*)malloc(sizeof(Stair));
+    if (newStair == NULL){
+        printf("Memory allocation failed for stairs");
+        exit(1);
+    }
+    newStair->startFloor = data[0];
+    newStair->startWidth = data[1];
+    newStair->startLength = data[2];
+    newStair->endFloor = data[3];
+    newStair->endWidth = data[4];
+    newStair->endLength = data[5];
+    newStair->direction = BOTH;
+    newStair->next = NULL;
+    return newStair;
+}
+// void insertAtFirst(struct Node** head, int data) {
+//     struct Node* newNode = createNode(data);
+//     newNode->next = *head;
+//     *head = newNode;
+// }
+void insertStair(Stair** head, int data[6]){
+    Stair* newStair = createStair(data);
+}
+int loadStairs(){
 
+}
 int initializeFloor(){
     cellTypeWrite(0,6,8,16,9,START);
     cellTypeWrite(1,0,8,5,16,BLOCK);

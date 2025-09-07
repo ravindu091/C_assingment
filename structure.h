@@ -7,6 +7,9 @@ enum Type{
 enum PointType{
     ADD , DECREASE , MULTIPLY , NONE
 };
+enum StairDirection{
+    UP , DOWN , BOTH
+};
 typedef struct{
     char floor;
     enum Direction direction;
@@ -31,5 +34,13 @@ typedef struct {
     int length;
 } Pole;
 typedef struct{
+    int startFloor;
+    int endFloor;
+    int startWidth;
+    int startLength;
+    int endWidth;
+    int endLength;
+    enum StairDirection direction;
+    struct Stair *next;
     
-} Stair;
+}Stair;
