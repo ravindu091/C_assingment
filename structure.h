@@ -2,7 +2,7 @@ enum Direction {
     NORTH , EAST, SOUTH, WEST
 };
 enum Type{
-    FREE ,WALL, POLE, STAIR, START,BLOCK
+    FREE ,WALL, POLE, STAIR, START,BLOCK,BAWANA
 };
 enum PointType{
     ADD , DECREASE , MULTIPLY , NONE

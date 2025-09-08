@@ -3,54 +3,43 @@
 #include <string.h>
 #include "structure.h"
 
-Cell floor1[10][25];
-Cell floor2[10][25];
-Cell floor3[10][9];
+#define SEED 12345
+
+Cell floor[3][10][25];
+
 //stair
 Stair* stairHead = NULL;
 Pole* poleHead = NULL;
 int stairCount =0;
+int inValidBlock = 0;
 void initializeAllCells() {
-    //floor 1
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 25; j++) {
-            floor1[i][j].type = FREE;
-            floor1[i][j].isPole = 0;
-            floor1[i][j].isStair = 0;
-            floor1[i][j].momentPoint = 0;
-            floor1[i][j].pointType = NONE;
+    for(int x=0;x <3;x++){
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 25; j++) {
+                floor[x][i][j].type = FREE;
+                floor[x][i][j].isPole = 0;
+                floor[x][i][j].isStair = 0;
+                floor[x][i][j].momentPoint = 0;
+                floor[x][i][j].pointType = NONE;
+            }
         }
     }
-    // floor 2
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 25; j++) {
-            floor2[i][j].type = FREE;
-            floor2[i][j].isPole = 0;
-            floor2[i][j].isStair = 0;
-            floor2[i][j].momentPoint = 0;
-            floor2[i][j].pointType = NONE;
-        }
+    
+    
+    
+}
+int inRange(int value, int start, int end){
+    if (start <= value && value <= end)
+    {
+        return 1;
     }
-    // floor 3
-    for (int i = 0; i < 10; i++) {
-        for (int j = 8; j < 17; j++) {
-            floor3[i][j].type = FREE;
-            floor3[i][j].isPole = 0;
-            floor3[i][j].isStair = 0;
-            floor3[i][j].momentPoint = 0;
-            floor3[i][j].pointType = NONE;
-        }
-    }
+    return 0;
+    
 }
 Cell* cell(int floorNumber, int widthNumber,int lengthNumber ){
-    if(floorNumber == 2){
-        return &floor3[widthNumber][lengthNumber -8];
-    }else if(floorNumber == 0){
-        return &floor1[widthNumber][lengthNumber];
-
-    }else if(floorNumber == 1){
-        return &floor2[widthNumber][lengthNumber];
-    } 
+    if((inRange(floorNumber , 0,2))&&((inRange(widthNumber,0,9))&&(inRange(lengthNumber,0,24)))){
+        return &floor[floorNumber][widthNumber][lengthNumber];
+    }
     return NULL;
 }
 
@@ -65,32 +54,25 @@ int logWrite(const char *message ){
     fprintf(fp,message);
     fclose(fp);
 }
-void cellTypeWrite(int floor, int startWidth, int startLength, int endWidth, int endLength , enum Type type ){
+void cellTypeWrite(int floorNumber, int startWidth, int startLength, int endWidth, int endLength , enum Type type ){
     for(int i = startWidth; i <= endWidth; i++ ){
         for(int j = startLength; j <= endLength; j++){
-            Cell *ptr = cell(floor,i,j);
+            Cell *ptr = cell(floorNumber,i,j);
 
             ptr->type = type;
-            
+            inValidBlock++;
             printf("%d %d %d \n",i , j , ptr->type);
         }
         
     }
     printf("end \n");
 }
-int inRange(int value, int start, int end){
-    if (start <= value && value < end)
-    {
-        return 1;
-    }
-    return 0;
-    
-}
+
 //Load the wall
 int loadWalls(){
     char buffer[100];
     int validated = 0; //if all walls are valid value is 0
-    int floor, startWidth, startLength, endWidth, endLength;
+    int floorNumber, startWidth, startLength, endWidth, endLength;
     printf("Load wall function \n");
     FILE *fp = fopen("walls.txt","r");
     if(fp == NULL){
@@ -100,7 +82,7 @@ int loadWalls(){
     }
     
     //read the file
-    while(fscanf(fp,"[%d, %d, %d, %d, %d] ",&floor, &startWidth, &startLength, &endWidth, &endLength)==5){
+    while(fscanf(fp,"[%d, %d, %d, %d, %d] ",&floorNumber, &startWidth, &startLength, &endWidth, &endLength)==5){
         printf("read file\n");
         //validation
         if((0 <= endLength && endLength < 25) &&(0 <= startLength && startLength < 25) &&(0 <= startWidth  && startWidth  < 10) &&(0 <= endWidth    && endWidth    < 10)){
@@ -109,7 +91,7 @@ int loadWalls(){
                 //valid
             }else{
                 printf("Unvalid wall not a line\n");
-                sprintf(buffer, "The wall %d, %d, %d, %d, %d is not valid (not aline) \n",floor, startWidth, startLength, endWidth, endLength);
+                sprintf(buffer, "The wall %d, %d, %d, %d, %d is not valid (not aline) \n",floorNumber, startWidth, startLength, endWidth, endLength);
                 logWrite(buffer);
                 return 1;
             }
@@ -119,7 +101,7 @@ int loadWalls(){
         }
         for(int i = startWidth; i <= endWidth; i++ ){
             for(int j = startLength; j <= endLength; j++){
-                Cell *ptr = cell(floor,i,j);
+                Cell *ptr = cell(floorNumber,i,j);
                 printf("state of the cell %d \n" ,ptr->type);
                 if(ptr->type == BLOCK){
                     sprintf(buffer,"wall can't be place on %d %d blocked cell \n",i , j);
@@ -161,8 +143,9 @@ int loadWalls(){
             
           for(int i = startWidth; i <= endWidth; i++ ){
             for(int j = startLength; j <= endLength;  j++){
-                Cell *temp = cell(floor,i,j);
+                Cell *temp = cell(floorNumber,i,j);
                 temp->type = WALL;
+                inValidBlock++;
                 printf("Wall implemented %d %d %d \n",i , j , temp->type);
                 
             }  
@@ -380,9 +363,14 @@ int loadPoles(){
     fclose(fp);
 }
 int initializeFloor(){
-    cellTypeWrite(0,6,8,16,9,START);
+    cellTypeWrite(0,6,8,9,16,START);
+    printf("in valid cell %d \n",inValidBlock);
+    cellTypeWrite(0,7,21,9,24,BAWANA);
+    printf("in valid cell %d \n",inValidBlock);
     cellTypeWrite(1,0,8,5,16,BLOCK);
+    printf("in valid cell %d \n",inValidBlock);
     printf("state on wall function %d\n",loadWalls());
+    printf("in valid cell %d \n",inValidBlock);
     printf("state on stairs function %d\n",loadStairs());
     printf("state on pole function %d\n",loadPoles());
     Cell *ptr = cell(0,9,9);
