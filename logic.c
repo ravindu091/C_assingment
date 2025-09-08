@@ -8,11 +8,43 @@ Cell floor2[10][25];
 Cell floor3[10][9];
 //stair
 Stair* stairHead = NULL;
+Pole* poleHead = NULL;
 int stairCount =0;
-
+void initializeAllCells() {
+    //floor 1
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 25; j++) {
+            floor1[i][j].type = FREE;
+            floor1[i][j].isPole = 0;
+            floor1[i][j].isStair = 0;
+            floor1[i][j].momentPoint = 0;
+            floor1[i][j].pointType = NONE;
+        }
+    }
+    // floor 2
+    for (int i = 0; i < 10; i++) {
+        for (int j = 0; j < 25; j++) {
+            floor2[i][j].type = FREE;
+            floor2[i][j].isPole = 0;
+            floor2[i][j].isStair = 0;
+            floor2[i][j].momentPoint = 0;
+            floor2[i][j].pointType = NONE;
+        }
+    }
+    // floor 3
+    for (int i = 0; i < 10; i++) {
+        for (int j = 8; j < 17; j++) {
+            floor3[i][j].type = FREE;
+            floor3[i][j].isPole = 0;
+            floor3[i][j].isStair = 0;
+            floor3[i][j].momentPoint = 0;
+            floor3[i][j].pointType = NONE;
+        }
+    }
+}
 Cell* cell(int floorNumber, int widthNumber,int lengthNumber ){
     if(floorNumber == 2){
-        return &floor3[widthNumber][lengthNumber + 8];
+        return &floor3[widthNumber][lengthNumber -8];
     }else if(floorNumber == 0){
         return &floor1[widthNumber][lengthNumber];
 
@@ -23,10 +55,11 @@ Cell* cell(int floorNumber, int widthNumber,int lengthNumber ){
 }
 
 //Write on log file
-void logWrite(const char *message ){
+int logWrite(const char *message ){
     FILE *fp = fopen("log.txt","a");
     if(fp == NULL){
         printf("Error: Could not open the file \n");
+        return 1;
     }
     
     fprintf(fp,message);
@@ -44,6 +77,14 @@ void cellTypeWrite(int floor, int startWidth, int startLength, int endWidth, int
         
     }
     printf("end \n");
+}
+int inRange(int value, int start, int end){
+    if (start <= value && value < end)
+    {
+        return 1;
+    }
+    return 0;
+    
 }
 //Load the wall
 int loadWalls(){
@@ -119,7 +160,7 @@ Stair *createStair(int data[6]){
     Stair* newStair = (Stair*)malloc(sizeof(Stair));
     if (newStair == NULL){
         printf("Memory allocation failed for stairs");
-        exit(1);
+        return NULL;
     }
     newStair->startFloor = data[0];
     newStair->startWidth = data[1];
@@ -132,13 +173,34 @@ Stair *createStair(int data[6]){
     return newStair;
 }
 //insert stair to linked list
-void insertStair(Stair* head, int data[6]){
+void insertStair(Stair **head, int data[6]){
     Stair* newStair = createStair(data);
-    newStair->next = head;
-    head = newStair;
+    newStair->next = *head;
+    *head = newStair;
 
 }
-
+//create pole node
+Pole* createPole(int data[5]){
+    Pole* newPole = (Pole*)malloc(sizeof(Pole));
+    if(newPole == NULL){
+        logWrite("can't memory allocate for pole \n");
+        return NULL;
+    }
+    newPole->startFloor = data[0];
+    newPole->endFloor = data[1];
+    newPole->width = data[2];
+    newPole->length = data[3];
+    newPole->isMiddle = data[4];
+    newPole->next = NULL;
+    return newPole;
+}
+//insert pole node to linked list
+void insertPole(Pole **head, int data[5]){
+    Pole* newPole = createPole(data);
+    newPole->next = *head;
+    *head = newPole;
+}
+//load stairs
 int loadStairs(){
     char buffer[100];
     int startFloor, startWidth, startLength, endFloor, endWidth, endLength;
@@ -187,7 +249,7 @@ int loadStairs(){
 
         //insert to stairs list
         int data[6] = {startFloor,startWidth,startLength,endFloor,endWidth,endLength};
-        insertStair(stairHead,data);
+        insertStair(&stairHead,data);
         stairCount++;
     }
     fclose(fp);
@@ -205,35 +267,106 @@ int loadStairs(){
         current = current->next;
     }
 }
-
+//load poles
 int loadPoles(){
+    int lineCount = 0;
     char line[100];
+    char buffer[100];
     int startFloor, endFloor, width,length;
     FILE *fp = fopen("poles.txt","r");
     if(fp == NULL){
         printf("Can't open the poles file");
         return 1;
     }
+    //read poles file
     while(fgets(line,sizeof(line),fp)){
+        //matching the pole file
+        lineCount++;
         int matched = sscanf(line,"[%d, %d, %d, %d]",&startFloor,&endFloor,&width,&length);
 
-        if (matched == 6)
+        if (matched == 4)
         {
             //pole in valid format
+            sprintf(buffer,"The pole [%d, %d, %d, %d] ",startFloor, endFloor, width,length);
+            if (
+                ( inRange(startFloor,0,3) && inRange(endFloor,0,3))&&(inRange(width,0,10) && inRange(length,0,25))
+            )
+            {   
+                //if pole in range
+                Cell *startCell = cell(startFloor,width,length);
+                Cell *endCell = cell(endFloor,width, length);
+                if (startCell == NULL || endCell == NULL)
+                {   
+                    strcat(buffer, "on the null cell \n");
+                    logWrite(buffer);
+                    return 1;
+                }
+                if (startCell->type == BLOCK || endCell->type == BLOCK)
+                {
+                    strcat(buffer,"on the blocked cell \n");
+                    logWrite(buffer);
+                    return 1;
+                }
+                if (startCell->type == WALL || endFloor == WALL)
+                {
+                    strcat(buffer,"on the wall \n");
+                    logWrite(buffer);
+                    return 1;
+                }
+                
+                //check the pole is cross a floor
+                int isCrossFloor = (startFloor > endFloor) ? startFloor - endFloor : endFloor - startFloor;
+                if (isCrossFloor == 2)
+                {
+                    Cell *middleCell = cell(2,width,length);
+                    if (middleCell->type == BLOCK || middleCell->type == WALL)
+                    {
+                        strcat(buffer, "error in the middle cell block cell or wall \n");
+                        logWrite(buffer);
+                        return 1;
+                    }else{
+                        //write as a pole cell
+                        middleCell->isPole = 1;
+                    }
+                    isCrossFloor = 1;
+                }
+                //write as pole cell
+                startCell->isPole = 1;
+                endCell->isPole = 1;
+                int data[5] = {startFloor , endFloor , width , length, isCrossFloor};
+                insertPole(&poleHead,data);
+
+                
+            }else{
+                strcat(buffer,"values are not in the range \n");
+                logWrite(buffer);
+                return 1;
+            }
+            
         }else{
             //not a valid pole
+            sprintf(buffer,"Not valid pole in %d line \n",lineCount);
+            printf("%s \n",buffer);
+            logWrite(buffer);
         }
         
     }
+    if (lineCount == 0)
+    {
+        logWrite("There are nothing on poles.txt file \n");
+    }
+    
     fclose(fp);
 }
 int initializeFloor(){
     cellTypeWrite(0,6,8,16,9,START);
     cellTypeWrite(1,0,8,5,16,BLOCK);
-    printf("state on wall function %d\n",loadWalls());
-    printf("state on stairs function %d\n",loadStairs());
+    //printf("state on wall function %d\n",loadWalls());
+    //printf("state on stairs function %d\n",loadStairs());
+    printf("state on pole function %d\n",loadPoles());
     Cell *ptr = cell(0,9,9);
     printf(" where %d \n", ptr->type);
+
 }
 
 int initialize(){

@@ -2,7 +2,7 @@ enum Direction {
     NORTH , EAST, SOUTH, WEST
 };
 enum Type{
-    WALL, POLE, STAIR, START, FREE,BLOCK
+    FREE ,WALL, POLE, STAIR, START,BLOCK
 };
 enum PointType{
     ADD , DECREASE , MULTIPLY , NONE
@@ -28,11 +28,13 @@ typedef struct{
 
 } Cell;
 
-typedef struct {
+typedef struct Pole{
     int startFloor;
     int endFloor;
     int width;
     int length;
+    short isMiddle;
+    struct Pole *next;
 } Pole;
 typedef struct Stair{
     int startFloor;
