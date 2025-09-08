@@ -5,7 +5,7 @@
 
 #define SEED 12345
 
-Cell floor[3][10][25];
+Cell floors[3][10][25];
 
 //stair
 Stair* stairHead = NULL;
@@ -16,11 +16,11 @@ void initializeAllCells() {
     for(int x=0;x <3;x++){
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 25; j++) {
-                floor[x][i][j].type = FREE;
-                floor[x][i][j].isPole = 0;
-                floor[x][i][j].isStair = 0;
-                floor[x][i][j].momentPoint = 0;
-                floor[x][i][j].pointType = NONE;
+                floors[x][i][j].type = FREE;
+                floors[x][i][j].isPole = 0;
+                floors[x][i][j].isStair = 0;
+                floors[x][i][j].momentPoint = 0;
+                floors[x][i][j].pointType = NONE;
             }
         }
     }
@@ -38,7 +38,7 @@ int inRange(int value, int start, int end){
 }
 Cell* cell(int floorNumber, int widthNumber,int lengthNumber ){
     if((inRange(floorNumber , 0,2))&&((inRange(widthNumber,0,9))&&(inRange(lengthNumber,0,24)))){
-        return &floor[floorNumber][widthNumber][lengthNumber];
+        return &floors[floorNumber][widthNumber][lengthNumber];
     }
     return NULL;
 }
@@ -369,6 +369,9 @@ int initializeFloor(){
     printf("in valid cell %d \n",inValidBlock);
     cellTypeWrite(1,0,8,5,16,BLOCK);
     printf("in valid cell %d \n",inValidBlock);
+    cellTypeWrite(2,0,17,9,24,BLOCK);
+    cellTypeWrite(2,0,8,5,16,BLOCK);
+    printf("in valid cell 3rd floor %d \n",inValidBlock);
     printf("state on wall function %d\n",loadWalls());
     printf("in valid cell %d \n",inValidBlock);
     printf("state on stairs function %d\n",loadStairs());
