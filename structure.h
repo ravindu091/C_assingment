@@ -21,28 +21,31 @@ typedef struct{
 
 typedef struct{
     enum Type type;
+    short floor;
+    short width;
+    short length;
     short isPole;
     short isStair;
-    int momentPoint;
+    short momentPoint;
     enum PointType pointType;
 
 } Cell;
 
 typedef struct Pole{
-    int startFloor;
-    int endFloor;
-    int width;
-    int length;
+    short startFloor;
+    short endFloor;
+    short width;
+    short length;
     short isMiddle;
     struct Pole *next;
 } Pole;
 typedef struct Stair{
-    int startFloor;
-    int endFloor;
-    int startWidth;
-    int startLength;
-    int endWidth;
-    int endLength;
+    short startFloor;
+    short endFloor;
+    short startWidth;
+    short startLength;
+    short endWidth;
+    short endLength;
     enum StairDirection direction;
     struct Stair *next;
     

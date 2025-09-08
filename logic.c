@@ -21,6 +21,9 @@ void initializeAllCells() {
                 floors[x][i][j].isStair = 0;
                 floors[x][i][j].momentPoint = 0;
                 floors[x][i][j].pointType = NONE;
+                floors[x][i][j].floor = x;
+                floors[x][i][j].width = i;
+                floors[x][i][j].length = j;
             }
         }
     }
@@ -61,7 +64,7 @@ void cellTypeWrite(int floorNumber, int startWidth, int startLength, int endWidt
 
             ptr->type = type;
             inValidBlock++;
-            printf("%d %d %d \n",i , j , ptr->type);
+            //printf("%d %d %d \n",i , j , ptr->type);
         }
         
     }
@@ -362,20 +365,100 @@ int loadPoles(){
     
     fclose(fp);
 }
+int randomValue(int min , int max){
+    int random =  rand()% (max-min +1) + min;
+    return random;
+}
+int addMomentPoint(){
+    srand(SEED);
+    int validBlocks = 750 - inValidBlock;
+    Cell freeCell[validBlocks];
+    int index =0;
+    for(int x=0;x <3;x++){
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 25; j++) {
+                Cell temp = floors[x][i][j];
+                if(temp.type == FREE){
+                    freeCell[index] = temp;
+                    index++;
+                } 
+            }
+        }
+    }
+    for (int i = 0; i < validBlocks; i++)
+    {
+        int j = randomValue(0,validBlocks -1);
+        Cell temp = freeCell[i];
+        freeCell[i] = freeCell[j];
+        freeCell[j] = temp;
+    }
+    int part1 = validBlocks * 25/100;
+    int part2 = validBlocks * 35/100;
+    int part3 = validBlocks * 25/100;
+    int part4 = validBlocks * 10/100;
+    int part5 = validBlocks - (part1 + part2 + part3 + part4);
+
+    //consumable zero
+    for (int i = 0; i < part1; i++)
+    {   
+        Cell temp = freeCell[i];
+        Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        currentCell->momentPoint = 0;
+        currentCell->pointType = NONE;
+    }
+    //consumable value 1 to 4
+    for (int i = part1 ; i < part1 + part2; i++)
+    {   
+        Cell temp = freeCell[i];
+        Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        currentCell->momentPoint = randomValue(1,4);
+        currentCell->pointType = DECREASE;
+    }
+    //bonus 1 to 2
+    for (int i = (part1 + part2); i < (part1 + part2 + part3); i++)
+    {   
+        Cell temp = freeCell[i];
+        Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        currentCell->momentPoint = randomValue(1,2);
+        currentCell->pointType = ADD;
+    }
+    //bonus 3 to 5
+    for (int i = (part1 + part2 + part3); i < (part1 + part2 + part3+ part4); i++)
+    {   
+        Cell temp = freeCell[i];
+        Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        currentCell->momentPoint = randomValue(3,5);
+        currentCell->pointType = ADD;
+    }
+    //bonus 2 to 3 multiply
+    for (int i = (part1 + part2 + part3+ part4); i <(part1 + part2 + part3+ part4 + part5); i++)
+    {   
+        Cell temp = freeCell[i];
+        Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        currentCell->momentPoint = randomValue(2,3);
+        currentCell->pointType = MULTIPLY;
+    }
+
+    
+}
 int initializeFloor(){
+    //initialize all cells
+    initializeAllCells();
     cellTypeWrite(0,6,8,9,16,START);
     printf("in valid cell %d \n",inValidBlock);
     cellTypeWrite(0,7,21,9,24,BAWANA);
     printf("in valid cell %d \n",inValidBlock);
     cellTypeWrite(1,0,8,5,16,BLOCK);
-    printf("in valid cell %d \n",inValidBlock);
+    printf("in valid cell 1st floor %d \n",inValidBlock);
     cellTypeWrite(2,0,17,9,24,BLOCK);
-    cellTypeWrite(2,0,8,5,16,BLOCK);
+    printf("in valid cell 3rd 1st part floor %d \n",inValidBlock);
+    cellTypeWrite(2,0,0,9,7,BLOCK);
     printf("in valid cell 3rd floor %d \n",inValidBlock);
     printf("state on wall function %d\n",loadWalls());
     printf("in valid cell %d \n",inValidBlock);
     printf("state on stairs function %d\n",loadStairs());
     printf("state on pole function %d\n",loadPoles());
+    addMomentPoint();
     Cell *ptr = cell(0,9,9);
     printf(" where %d \n", ptr->type);
 
