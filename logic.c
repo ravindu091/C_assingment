@@ -138,8 +138,29 @@ int loadWalls(){
         //initializing
         if (validated == 0)
         {
+            if (startWidth == endWidth)
+            {
+                if (startLength > endLength)
+                {
+                    int temp;
+                    temp = startLength;
+                    startLength = endLength;
+                    endLength = temp;
+                }
+                
+
+            }
+            if(startLength == endLength){
+                if(startWidth > endWidth){
+                    int temp;
+                    temp = startWidth;
+                    startWidth = endWidth;
+                    endWidth = temp;
+                }
+            }
+            
           for(int i = startWidth; i <= endWidth; i++ ){
-            for(int j = startLength; j <= endLength; j++){
+            for(int j = startLength; j <= endLength;  j++){
                 Cell *temp = cell(floor,i,j);
                 temp->type = WALL;
                 printf("Wall implemented %d %d %d \n",i , j , temp->type);
@@ -307,7 +328,7 @@ int loadPoles(){
                     logWrite(buffer);
                     return 1;
                 }
-                if (startCell->type == WALL || endFloor == WALL)
+                if (startCell->type == WALL || endCell->type == WALL)
                 {
                     strcat(buffer,"on the wall \n");
                     logWrite(buffer);
@@ -361,8 +382,8 @@ int loadPoles(){
 int initializeFloor(){
     cellTypeWrite(0,6,8,16,9,START);
     cellTypeWrite(1,0,8,5,16,BLOCK);
-    //printf("state on wall function %d\n",loadWalls());
-    //printf("state on stairs function %d\n",loadStairs());
+    printf("state on wall function %d\n",loadWalls());
+    printf("state on stairs function %d\n",loadStairs());
     printf("state on pole function %d\n",loadPoles());
     Cell *ptr = cell(0,9,9);
     printf(" where %d \n", ptr->type);
