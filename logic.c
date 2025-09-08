@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "structure.h"
 
 Cell floor1[10][25];
@@ -7,6 +8,7 @@ Cell floor2[10][25];
 Cell floor3[10][9];
 //stair
 Stair* stairHead = NULL;
+int stairCount =0;
 
 Cell* cell(int floorNumber, int widthNumber,int lengthNumber ){
     if(floorNumber == 2){
@@ -112,16 +114,7 @@ int loadWalls(){
     return validated;
 
 }
-// Stair* createNode(int data) {
-//     Node* newNode = (Node*)malloc(sizeof(Node)); // Allocate memory for the new node
-//     if (newNode == NULL) {
-//         printf("Memory allocation failed!\n");
-//         exit(1); // Exit if memory allocation fails
-//     }
-//     newNode->data = data; // Assign data to the new node
-//     newNode->next = NULL; // Initialize next pointer to NULL
-//     return newNode;
-// }
+// create stair node
 Stair *createStair(int data[6]){
     Stair* newStair = (Stair*)malloc(sizeof(Stair));
     if (newStair == NULL){
@@ -138,21 +131,107 @@ Stair *createStair(int data[6]){
     newStair->next = NULL;
     return newStair;
 }
-// void insertAtFirst(struct Node** head, int data) {
-//     struct Node* newNode = createNode(data);
-//     newNode->next = *head;
-//     *head = newNode;
-// }
-void insertStair(Stair** head, int data[6]){
+//insert stair to linked list
+void insertStair(Stair* head, int data[6]){
     Stair* newStair = createStair(data);
-}
-int loadStairs(){
+    newStair->next = head;
+    head = newStair;
 
+}
+
+int loadStairs(){
+    char buffer[100];
+    int startFloor, startWidth, startLength, endFloor, endWidth, endLength;
+    int validate = 0;
+
+    FILE *fp = fopen("stairs.txt","r");
+    if(fp == NULL){
+        printf("Couldn,t open the stairs file \n");
+        return 1;
+    }
+
+    while(fscanf(fp,"[%d, %d, %d, %d, %d, %d]",&startFloor,&startWidth,&startLength,&endFloor,&endWidth,&endLength)){
+        printf("Read the stairs file \n");
+        sprintf(buffer,"invalid stair at [%d,%d,%d,%d,%d,%d]",startFloor,startWidth,startLength,endFloor,endWidth,endLength);
+        if(!((0 <= endLength && endLength < 25) &&(0 <= startLength && startLength < 25) &&(0 <= startWidth  && startWidth  < 10) &&(0 <= endWidth && endWidth< 10))){
+            strcat(buffer, "Invalid stair\n");
+            logWrite(buffer);
+            return 1;
+        }
+        //read start and end cell
+        Cell *startCell = cell(startFloor,startWidth,startLength);
+        Cell *endCell = cell(endFloor,endWidth,endLength);
+        if ((startCell == NULL)||(endCell ==NULL))
+        {
+            strcat(buffer,"Cell not found\n");
+            logWrite(buffer);
+            printf("%s",buffer);
+            return 1;
+        }
+        //validate
+        if(startCell->type == BLOCK){
+            strcat(buffer,"Can't implement on blocked cell\n");
+            logWrite(buffer);
+            printf("%s",buffer);
+            return 1;
+
+        }else if(startCell->type == WALL){
+            strcat(buffer,"Can't implement on a wall\n");
+            logWrite(buffer);
+            printf("%s",buffer);
+            return 1;
+        }
+        //implement
+        startCell->isStair = 1;
+        endCell->isStair = 1;
+
+        //insert to stairs list
+        int data[6] = {startFloor,startWidth,startLength,endFloor,endWidth,endLength};
+        insertStair(stairHead,data);
+        stairCount++;
+    }
+    fclose(fp);
+    printf("Show the stairs");
+
+    Stair *current = stairHead;
+    if (current == NULL)
+    {
+        printf("Cant find the stairs list\n");
+        return 1;
+    }
+    
+    while(current != NULL){
+        printf(" stairs are %d %d %d \n",current->startFloor,current->startWidth,current->startLength);
+        current = current->next;
+    }
+}
+
+int loadPoles(){
+    char line[100];
+    int startFloor, endFloor, width,length;
+    FILE *fp = fopen("poles.txt","r");
+    if(fp == NULL){
+        printf("Can't open the poles file");
+        return 1;
+    }
+    while(fgets(line,sizeof(line),fp)){
+        int matched = sscanf(line,"[%d, %d, %d, %d]",&startFloor,&endFloor,&width,&length);
+
+        if (matched == 6)
+        {
+            //pole in valid format
+        }else{
+            //not a valid pole
+        }
+        
+    }
+    fclose(fp);
 }
 int initializeFloor(){
     cellTypeWrite(0,6,8,16,9,START);
     cellTypeWrite(1,0,8,5,16,BLOCK);
     printf("state on wall function %d\n",loadWalls());
+    printf("state on stairs function %d\n",loadStairs());
     Cell *ptr = cell(0,9,9);
     printf(" where %d \n", ptr->type);
 }

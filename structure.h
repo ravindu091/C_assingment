@@ -21,7 +21,8 @@ typedef struct{
 
 typedef struct{
     enum Type type;
-    short state;
+    short isPole;
+    short isStair;
     int momentPoint;
     enum PointType pointType;
 
@@ -33,7 +34,7 @@ typedef struct {
     int width;
     int length;
 } Pole;
-typedef struct{
+typedef struct Stair{
     int startFloor;
     int endFloor;
     int startWidth;
