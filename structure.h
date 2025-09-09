@@ -59,3 +59,16 @@ typedef struct Stair{
     struct Stair *next;
     
 }Stair;
+
+typedef struct NextCell {
+    short floor;
+    short width;
+    short length;
+    short isValid;
+}NextCell;
+
+typedef struct Flag{
+    short floor;
+    short width;
+    short length;
+} Flag;
