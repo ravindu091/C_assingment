@@ -2,16 +2,64 @@
 #include <stdlib.h>
 #include <string.h>
 #include "structure.h"
+#include "data.h"
 
 #define SEED 12345
 
 Cell floors[3][10][25];
+Player playerA={
+    .name = 'A',
+    .direction = PA_SD,
+    .floor = 0,
+    .width = PA_SW,
+    .length = PA_SL,
+    .startDirection = PA_SD,
+    .startWidth = PA_SW,
+    .startLength = PA_SL,
+    .throwNumber = 0,
+    .state = STA
+};
+Player playerB={
+    .name = 'B',
+    .direction = PB_SD,
+    .floor = 0,
+    .width = PB_SW,
+    .length = PB_SL,
+    .startDirection = PB_SD,
+    .startWidth = PB_SW,
+    .startLength = PB_SL,
+    .throwNumber = 0,
+    .state = STA
+};
+Player playerC={
+    .name = 'C',
+    .direction = PC_SD,
+    .floor = 0,
+    .width = PC_SW,
+    .length = PC_SL,
+    .startDirection = PC_SD,
+    .startWidth = PC_SW,
+    .startLength = PC_SL,
+    .throwNumber = 0,
+    .state = STA
+};
+
 
 //stair
 Stair* stairHead = NULL;
 Pole* poleHead = NULL;
 int stairCount =0;
+short poleCount = 0;
 int inValidBlock = 0;
+int momentData[3];
+int *momentDataPtr = momentData;
+int initializePlayers(){
+    playerA.direction = PA_SL;
+    playerA.floor = 0;
+    playerA.width = PA_SW;
+    playerA.length = PA_SL;
+    
+}
 void initializeAllCells() {
     for(int x=0;x <3;x++){
         for (int i = 0; i < 10; i++) {
@@ -342,6 +390,7 @@ int loadPoles(){
                 endCell->isPole = 1;
                 int data[5] = {startFloor , endFloor , width , length, isCrossFloor};
                 insertPole(&poleHead,data);
+                poleCount++;
 
                 
             }else{
@@ -463,9 +512,88 @@ int initializeFloor(){
     printf(" where %d \n", ptr->type);
 
 }
+Pole * findPole(short width,short length){
+    Pole *head = poleHead;
+    for(int i =0; i < poleCount ; i++){
+        if(head->width == width && head->length==length){
+            return head;
+        }
+        head = head->next;
+    }
+    return NULL;
+}
+int* checkMoment(enum Direction direction ,short floor,short width,short length,short diceNumber,char name){
+    const char *directionNames[] = {
+        "NORTH","EAST","SOUTH","WEST"
+    };
+    
+    
+    for(int i = 0; i < diceNumber; i++){
+        //make direction
+        switch(direction){
+            case NORTH:
+                width --;
+                break;
+            case EAST:
+                length++;
+                break;
+            case SOUTH:
+                width++;
+                break;
+            case WEST:
+                length--;
+            default:
+                printf("error in direction\n");
+                break;
+        }
+        Cell* checkCell = cell(floor,width,length);
+        if (checkCell == NULL || checkCell->type == BLOCK)
+        {
+            //blocked by null cell
+            return 1;
+        }else if(checkCell->type == WALL){
+            //blocked by wall
+            return 1;
+        }else{
+            if(floor != 0 && checkCell->isPole == 1){
+                Pole *pole = findPole(width,length);
+                if(pole->startFloor != floor){
 
+                    int* result = checkMoment(direction,pole->startFloor,width,length,diceNumber,name);
+                }
+            }
+        }
+        
+
+    }
+}
+int addMoment(Player * player,short diceNumber){
+    
+}
+int playerMoment(Player* player){
+
+    //if player in start area
+    if(player->state == STA){
+        short diceNumber = randomValue(1,6);
+        if(diceNumber == 6){
+
+        }else{
+            printf("Player %c is at the starting area and rolls %d on the movement dice cannot enter the maze.\n",player->name,diceNumber);
+        }
+    }
+}
+int play(){
+    int count = 0;
+    while(count < 100){
+        playerMoment(&playerA);
+        playerMoment(&playerB);
+        playerMoment(&playerC);
+        count++;
+    }
+}
 int initialize(){
     FILE *fp = fopen("log.txt","w");
     fclose(fp);
     initializeFloor();
+    play();
 }

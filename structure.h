@@ -10,13 +10,22 @@ enum PointType{
 enum StairDirection{
     UP , DOWN , BOTH
 };
+enum PlayerState{
+    STA,NORMAL,SPECIAL
+};
 typedef struct{
-    char floor;
     enum Direction direction;
+    char name;
+    char floor;
     char throwNumber;
     short width;
     short length;
-    short state;
+    enum PlayerState state;
+    const enum Direction startDirection;
+    const short startFloor;
+    const short startWidth;
+    const short startLength;
+
 } Player;
 
 typedef struct{
