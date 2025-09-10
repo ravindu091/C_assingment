@@ -5,7 +5,7 @@
 #include "data.h"
 
 #define SEED 12345
-#define DEBUG 1
+#define DEBUG 0
 char deBuf[100];
 
 Cell floors[3][10][25];
@@ -151,7 +151,7 @@ int loadWalls(){
             if((startLength == endLength)||(startWidth == endWidth)){
                 //valid
             }else{
-                printf("Unvalid wall not a line\n");
+                printf("Invalid wall not a line\n");
                 sprintf(buffer, "The wall %d, %d, %d, %d, %d is not valid (not aline) \n",floorNumber, startWidth, startLength, endWidth, endLength);
                 logWrite(buffer);
                 return 1;
@@ -569,10 +569,10 @@ int initializeFloor(){
     printf(" where %d \n", ptr->type);
 
 }
-Pole * findPole(short width,short length){
+Pole * findPole(short floor,short width,short length){
     Pole *head = poleHead;
     for(int i =0; i < poleCount ; i++){
-        if(head->width == width && head->length==length){
+        if((head->width == width && head->length==length)&&(head->endFloor == floor )){
             return head;
         }
         head = head->next;
@@ -630,7 +630,7 @@ NextCell  getNextCell(Stair *currentStair,int isStartCell){
 }
 //
 int findDistance(short width, short length){
-    printf("flag is %d %d %d \n",flag.floor, flag.width,flag.length);
+    //printf("flag is %d %d %d \n",flag.floor, flag.width,flag.length);
     return abs(width - flag.width) + abs(length - flag.length);
 }
 NextCell handleStair(Cell *currentCell,int id){
@@ -698,33 +698,62 @@ NextCell handleStair(Cell *currentCell,int id){
     return invalid;
 
 }
-Cell handlePoleStair(Cell currentCell,int s_id){
-    
+void sendStart(Player * player){
+    printf("Send player to start");
+    player->floor = player->startFloor;
+    player->width = player->startWidth;
+    player->length = player->startLength;
+    player->direction = player->direction;
+}
+Cell handlePoleStair(Cell currentCell,int s_id, Player *player,int* count){
+    (*count)++;
+    if(*count > 100){
+        printf("count is ......%d\n",*count);
+        sendStart(player);
+        currentCell.type = BLOCK;
+        return currentCell;
+    }
+    if(currentCell.type == START){
+        sendStart(player);
+        currentCell.type = BLOCK;
+        return currentCell;
+    }
     if(currentCell.isPole == 1){
-        Pole *pole = findPole(currentCell.width,currentCell.length);
-        if(pole->endFloor == currentCell.floor){
-            currentCell.floor = pole->startFloor;
-            return currentCell;
+        printD("pole function");
+        Pole *pole = findPole(currentCell.floor,currentCell.width,currentCell.length);
+        if(pole != NULL){
+            if(pole->endFloor == currentCell.floor){
+            printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",player->name,currentCell.width,currentCell.length,player->name,currentCell.width,currentCell.length,pole->startFloor);
+            Cell newCell = *cell(pole->startFloor,currentCell.width,currentCell.length);
+            return handlePoleStair(newCell,0,player,count);
+        }
+         
         }
 
     }
     if(currentCell.isStair > 0){
+        printD("stair function............");
         NextCell nextCell = handleStair(&currentCell, s_id);
-        if(nextCell.isValid = 1){
-            Cell newCell = *cell(currentCell.floor,currentCell.width,currentCell.length);
-            return handlePoleStair(newCell);
+        if(nextCell.isValid == 1){
+            printf("Player %c lands on [%d , %d] which is a stair cell.\nPlayer %c takes the stairs and now placed at [%d , %d]in floor %d.\n",player->name,currentCell.width,currentCell.length,player->name,nextCell.width,nextCell.length,nextCell.floor);
+            Cell newCell = *cell(nextCell.floor,nextCell.width,nextCell.length);
+            return handlePoleStair(newCell,nextCell.id,player,count);
 
         }
     }
 
     return currentCell;    
 }
-int checkMoment(enum Direction direction ,short floor,short width,short length,short steps,char name){
+int checkMoment(Player* player ,short steps){
+    short floor = player->floor;
+    short width = player->width;
+    short length = player->length;
+
     short pastFloor = floor;
     short pastWidth = width;
     short pastLength = length;
-    printf("past width %d past length %d \n",pastWidth,pastLength);
-    printf("check moment \n");
+    //printf("past width %d past length %d \n",pastWidth,pastLength);
+    //printf("check moment \n");
     const char *directionNames[] = {
         "NORTH","EAST","SOUTH","WEST"
     };
@@ -732,7 +761,8 @@ int checkMoment(enum Direction direction ,short floor,short width,short length,s
     
     for(int i = 0; i < steps; i++){
         //make direction
-        switch(direction){
+        int count = 0;
+        switch(player->direction){
             case NORTH:
                 width--;
                 break;
@@ -749,10 +779,11 @@ int checkMoment(enum Direction direction ,short floor,short width,short length,s
                 printf("error in direction\n");
                 break;
         }
+        //printf("Go %d %d %d \n",floor,width,length);
         Cell* checkCell = cell(floor,width,length);
         if (checkCell == NULL || checkCell->type == BLOCK)
         {
-            printf("null \n");
+            printD("null \n");
             //printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at (%d,%d)\n",name,diceNumber,directionNames[direction],pastWidth,pastLength);
             return 1 ;
         }else if(checkCell->type == WALL){
@@ -763,63 +794,36 @@ int checkMoment(enum Direction direction ,short floor,short width,short length,s
         }else if(checkCell->type == START){
             return 1;
         }else{
-            if(floor != 0 && checkCell->isPole == 1){
-                Pole *pole = findPole(width,length);
-                if(pole->startFloor != floor){
-                    printf("we have pole %d %d %d\n",floor,width,length);
-                    int result = checkMoment(direction,pole->startFloor,width,length,steps - (i+1),name);
-                    if(result == 1){
-                        //can,t use pole
-                        
-                        printf("Pole can't use\n");
-                        return 1;
-                    }else if(result == 0){
-                        floor = pole->startFloor;
-                        printf("pole can use \n");
-                        printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",name,width,length,name,width,length,floor);
-                    }
-                    
-                    //stepped on a pole~
-                }
-            }
-            if(checkCell->isStair > 0){
-                if(pastFloor == floor){
-                printD("find a stair in");
-                NextCell nextCell = handleStair(checkCell,99);
-                if(nextCell.isValid == 1){
-                    printf("check stair...\n");
-                    int result = checkMoment(direction,nextCell.floor,nextCell.width,nextCell.length,steps - (i+1),name,nextCell.id);
-                    //s_id=nextCell.id;
-                    if(result == 1){
-                        //cant use stair
-                        printf("cant use stair \n");
-                        s_id = 0;
-                    }else{
-                        pastWidth = width;
-                        pastLength = length;
-                        floor = nextCell.floor;
-                        width = nextCell.width;
-                        length = nextCell.length;
-                        
-                        printf("Player %c lands on [%d , %d] which is a stair cell.\nPlayer %c takes the stairs and now placed at [%d , %d]in floor %d.\n",name,pastWidth,pastLength,name,width,length,floor);
-                    }
-                }else{
-                    s_id=0;
-                }
+                Cell newCell;
+                newCell.type = FREE;
+            
+             if(checkCell->isPole == 1 || checkCell->isStair >0){
+                newCell = handlePoleStair(*checkCell,0,player,&count);
 
-            }
-            }
+                if(newCell.type != BLOCK){
+                    floor = newCell.floor;
+                    width = newCell.width;
+                    length = newCell.length;
+                }
+                if(newCell.type == BLOCK){
+                    return 1;
+                }
+             }
+
 
         }
         
-        printf("Go %d %d %d \n",floor,width,length);
+        
 
     }
+    player->floor = floor;
+    player->width = width;
+    player->length = length;
     return 0;
 }
 
 int addMoment(Player * player,short diceNumber){
-    
+    checkMoment(player , diceNumber);
 }
 int playerMoment(Player* player){
 
@@ -827,19 +831,24 @@ int playerMoment(Player* player){
     if(player->state == STA){
         short diceNumber = randomValue(1,6);
         if(diceNumber == 6){
-
+            addMoment(player,1);
+            player->state = NORMAL;
+            printf("Player %c is at the starting area and rolls 6 on the movement dice and is placed on  [ %d , %d ] of the maze.\n",player->name,player->width,player->length);
         }else{
             printf("Player %c is at the starting area and rolls %d on the movement dice cannot enter the maze.\n",player->name,diceNumber);
         }
     }
 }
 int play(){
-    int count = 0;
+    int count = 1;
     while(count < 10){
+        printf("----------------ROUND  %d  ------------\n",count);
         playerMoment(&playerA);
         playerMoment(&playerB);
         playerMoment(&playerC);
         count++;
+
+        printf("\n");
     }
 }
 int initialize(){
