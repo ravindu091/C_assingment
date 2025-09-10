@@ -5,6 +5,8 @@
 #include "data.h"
 
 #define SEED 12345
+#define DEBUG 1
+char deBuf[100];
 
 Cell floors[3][10][25];
 Player playerA={
@@ -43,7 +45,12 @@ Player playerC={
     .throwNumber = 0,
     .state = STA
 };
+void printD(char buffer[]){
+    if(DEBUG == 1){
 
+    printf("%s \n", buffer);
+    }
+}
 
 //stair
 Stair* stairHead = NULL;
@@ -228,6 +235,7 @@ Stair *createStair(int data[6]){
     newStair->endLength = data[5];
     newStair->direction = BOTH;
     newStair->next = NULL;
+    newStair->id = data[6];
     return newStair;
 }
 //insert stair to linked list
@@ -259,19 +267,36 @@ void insertPole(Pole **head, int data[5]){
     *head = newPole;
 }
 //load stairs
+Stair * findStair(Stair* head, Cell* currentCell,int* isStartCell){
+    while(head!=NULL){
+        if(((head->startFloor == currentCell->floor)&&(head->startWidth == currentCell->width))&&head->startLength == currentCell->length){
+            *isStartCell = 1;
+            return head;
+        }
+        if(((head->endFloor == currentCell->floor)&&(head->endWidth == currentCell->width))&&head->endLength == currentCell->length){
+            *isStartCell = 0;
+            return head;
+        }
+        head = head->next;
+    }
+    return NULL;
+}
 int loadStairs(){
     char buffer[100];
+    char line[100];
     int startFloor, startWidth, startLength, endFloor, endWidth, endLength;
     int validate = 0;
-
+    int stairID = 30;
     FILE *fp = fopen("stairs.txt","r");
     if(fp == NULL){
         printf("Couldn,t open the stairs file \n");
         return 1;
     }
-
-    while(fscanf(fp,"[%d, %d, %d, %d, %d, %d]",&startFloor,&startWidth,&startLength,&endFloor,&endWidth,&endLength)){
-        printf("Read the stairs file \n");
+    while (fgets(line,sizeof(line),fp)){
+        int matched = sscanf(line,"[%d, %d, %d, %d, %d, %d]",&startFloor,&startWidth,&startLength,&endFloor,&endWidth,&endLength);
+        //while(fscanf(fp,"[%d, %d, %d, %d, %d, %d]",&startFloor,&startWidth,&startLength,&endFloor,&endWidth,&endLength)==6){
+        if(matched == 6){
+            printf("Read the stairs file \n");
         sprintf(buffer,"invalid stair at [%d,%d,%d,%d,%d,%d]",startFloor,startWidth,startLength,endFloor,endWidth,endLength);
         if(!((0 <= endLength && endLength < 25) &&(0 <= startLength && startLength < 25) &&(0 <= startWidth  && startWidth  < 10) &&(0 <= endWidth && endWidth< 10))){
             strcat(buffer, "Invalid stair\n");
@@ -302,13 +327,16 @@ int loadStairs(){
             return 1;
         }
         //implement
-        startCell->isStair = 1;
-        endCell->isStair = 1;
-
+        startCell->isStair ++;
+        endCell->isStair ++;
+        stairID++;
+        
         //insert to stairs list
-        int data[6] = {startFloor,startWidth,startLength,endFloor,endWidth,endLength};
+        int data[7] = {startFloor,startWidth,startLength,endFloor,endWidth,endLength,stairID};
+        printf("Print stair %d %d %d %d %d %d \n", data[0] ,data[1],data[2],data[3],data[4],data[5],data[6]);
         insertStair(&stairHead,data);
         stairCount++;
+        }
     }
     fclose(fp);
     printf("Show the stairs");
@@ -551,32 +579,25 @@ Pole * findPole(short width,short length){
     }
     return NULL;
 }
-Stair * findStair(Stair* head, Cell* currentCell,int* isStartCell){
-    while(head!=NULL){
-        if(((head->startFloor == currentCell->floor)&&(head->startWidth == currentCell->width))&&head->startLength == currentCell->length){
-            *isStartCell = 1;
-            return head;
-        }
-        if(((head->endFloor == currentCell->floor)&&(head->endWidth == currentCell->width))&&head->endLength == currentCell->length){
-            *isStartCell = 0;
-            return head;
-        }
-        head = head->next;
-    }
-    return NULL;
-}
+
 //get the next cell of the stair
 //NextCell nextCell;
 NextCell  getNextCell(Stair *currentStair,int isStartCell){
+    printD("selecting stair path...");
         NextCell nextCell;
+        //set stair id
+        nextCell.id = currentStair->id;
         if(currentStair->direction == BOTH){
+            printD("Both way can..");
             if(isStartCell == 1){
+                printD("upto");
                 nextCell.floor= currentStair->endFloor;
                 nextCell.width = currentStair->endWidth;
                 nextCell.length = currentStair->endLength;
                 nextCell.isValid = 1;
                 return nextCell;
             }else if(isStartCell == 0){
+                printD("down");
                 nextCell.floor = currentStair->startFloor;
                 nextCell.width = currentStair->startWidth;
                 nextCell.length = currentStair->startLength;
@@ -612,40 +633,62 @@ int findDistance(short width, short length){
     printf("flag is %d %d %d \n",flag.floor, flag.width,flag.length);
     return abs(width - flag.width) + abs(length - flag.length);
 }
-NextCell handleStair(Cell *currentCell){
+NextCell handleStair(Cell *currentCell,int id){
     int isStartCell1 = 0;
     int isStartCell2 = 0;
+    printf("Current cell stairs %d \n",currentCell->isStair);
     if (currentCell->isStair == 1)
     {
         Stair* currentStair = findStair(stairHead,currentCell,&isStartCell1);
         NextCell nextCell = getNextCell(currentStair,isStartCell1);
+        if(nextCell.id == id){
+            printf("stair id %d \n",nextCell.id);
+            nextCell.isValid =0;
+            return nextCell;
+        }
+        printf("stair id %d \n",nextCell.id);
+        printD("one stair");
         return nextCell;
     }else if(currentCell->isStair == 2){
+        printD("Two stair");
         isStartCell1 = 0;
         isStartCell2 = 0;
         Stair* stair1 = findStair(stairHead,currentCell,&isStartCell1);
-        Stair* stair2 = findStair(stair1,currentCell,&isStartCell2);
+        Stair* stair2 = findStair(stair1->next,currentCell,&isStartCell2);
         
         //find distance
         NextCell nextCell1 = getNextCell(stair1,isStartCell1);
         NextCell nextCell2 = getNextCell(stair2,isStartCell2);
-
+        if(nextCell1.id == id){
+            nextCell1.isValid =0;
+            printD("first stair used");
+        }
+        if(nextCell2.id == id){
+            nextCell2.isValid = 0;
+            printD("second stair is used");
+        }
         if(nextCell1.isValid == 1 && nextCell2.isValid == 1){
             //find distance of two
+            printD("We have two stairs. find distance");
             int distance1 = findDistance(nextCell1.width,nextCell1.length);
             int distance2 = findDistance(nextCell2.width,nextCell2.length);
             if(distance1<distance2){
+                printD("select stair 1");
                 return nextCell1;
             }else{
+                printD("select stair 2");
                 return nextCell2;
             }
         }else if(nextCell1.isValid == 0 && nextCell2.isValid == 0){
+            printD("both stairs are invalid");
             NextCell nextCell;
             nextCell.isValid = 0;
             return nextCell;
         }else if(nextCell1.isValid == 0){
+           printD("stair 1 valid");
             return nextCell2;
         }else if(nextCell2.isValid == 0){
+            printD("stair 2 valid");
             return nextCell1;
         }
 
@@ -655,10 +698,32 @@ NextCell handleStair(Cell *currentCell){
     return invalid;
 
 }
+Cell handlePoleStair(Cell currentCell,int s_id){
+    
+    if(currentCell.isPole == 1){
+        Pole *pole = findPole(currentCell.width,currentCell.length);
+        if(pole->endFloor == currentCell.floor){
+            currentCell.floor = pole->startFloor;
+            return currentCell;
+        }
+
+    }
+    if(currentCell.isStair > 0){
+        NextCell nextCell = handleStair(&currentCell, s_id);
+        if(nextCell.isValid = 1){
+            Cell newCell = *cell(currentCell.floor,currentCell.width,currentCell.length);
+            return handlePoleStair(newCell);
+
+        }
+    }
+
+    return currentCell;    
+}
 int checkMoment(enum Direction direction ,short floor,short width,short length,short steps,char name){
     short pastFloor = floor;
     short pastWidth = width;
     short pastLength = length;
+    printf("past width %d past length %d \n",pastWidth,pastLength);
     printf("check moment \n");
     const char *directionNames[] = {
         "NORTH","EAST","SOUTH","WEST"
@@ -687,53 +752,70 @@ int checkMoment(enum Direction direction ,short floor,short width,short length,s
         Cell* checkCell = cell(floor,width,length);
         if (checkCell == NULL || checkCell->type == BLOCK)
         {
+            printf("null \n");
             //printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at (%d,%d)\n",name,diceNumber,directionNames[direction],pastWidth,pastLength);
             return 1 ;
         }else if(checkCell->type == WALL){
             //blocked by wall
             //printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at (%d,%d)\n",name,diceNumber,directionNames[direction],pastWidth,pastLength);
-            
+            printf("wall \n");
             return 1;
         }else if(checkCell->type == START){
             return 1;
-        }else if(checkCell->type == FREE){
-            
-        } else{
+        }else{
             if(floor != 0 && checkCell->isPole == 1){
                 Pole *pole = findPole(width,length);
                 if(pole->startFloor != floor){
-
+                    printf("we have pole %d %d %d\n",floor,width,length);
                     int result = checkMoment(direction,pole->startFloor,width,length,steps - (i+1),name);
                     if(result == 1){
                         //can,t use pole
+                        
+                        printf("Pole can't use\n");
+                        return 1;
                     }else if(result == 0){
                         floor = pole->startFloor;
+                        printf("pole can use \n");
                         printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",name,width,length,name,width,length,floor);
                     }
                     
                     //stepped on a pole~
                 }
             }
-            if(pastFloor == floor){
-                
-                NextCell nextCell = handleStair(checkCell);
+            if(checkCell->isStair > 0){
+                if(pastFloor == floor){
+                printD("find a stair in");
+                NextCell nextCell = handleStair(checkCell,99);
                 if(nextCell.isValid == 1){
-                    int result = checkMoment(direction,nextCell.floor,nextCell.width,nextCell.length,steps - (i+1),name);
+                    printf("check stair...\n");
+                    int result = checkMoment(direction,nextCell.floor,nextCell.width,nextCell.length,steps - (i+1),name,nextCell.id);
+                    //s_id=nextCell.id;
                     if(result == 1){
                         //cant use stair
+                        printf("cant use stair \n");
+                        s_id = 0;
                     }else{
+                        pastWidth = width;
+                        pastLength = length;
                         floor = nextCell.floor;
                         width = nextCell.width;
                         length = nextCell.length;
+                        
                         printf("Player %c lands on [%d , %d] which is a stair cell.\nPlayer %c takes the stairs and now placed at [%d , %d]in floor %d.\n",name,pastWidth,pastLength,name,width,length,floor);
                     }
+                }else{
+                    s_id=0;
                 }
 
             }
+            }
+
         }
         
+        printf("Go %d %d %d \n",floor,width,length);
 
     }
+    return 0;
 }
 
 int addMoment(Player * player,short diceNumber){

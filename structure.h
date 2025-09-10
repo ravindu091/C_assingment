@@ -49,6 +49,7 @@ typedef struct Pole{
     struct Pole *next;
 } Pole;
 typedef struct Stair{
+    short id;
     short startFloor;
     short endFloor;
     short startWidth;
@@ -61,6 +62,7 @@ typedef struct Stair{
 }Stair;
 
 typedef struct NextCell {
+    short id;
     short floor;
     short width;
     short length;
