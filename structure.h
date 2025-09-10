@@ -25,6 +25,7 @@ typedef struct{
     const short startFloor;
     const short startWidth;
     const short startLength;
+    int momentPoint;
 
 } Player;
 

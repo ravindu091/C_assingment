@@ -6,6 +6,7 @@
 
 #define SEED 12345
 #define DEBUG 0
+#define MP_LIMIT 250
 char deBuf[100];
 
 Cell floors[3][10][25];
@@ -19,7 +20,8 @@ Player playerA={
     .startWidth = PA_SW,
     .startLength = PA_SL,
     .throwNumber = 0,
-    .state = STA
+    .state = STA,
+    .momentPoint = 100
 };
 Player playerB={
     .name = 'B',
@@ -31,7 +33,8 @@ Player playerB={
     .startWidth = PB_SW,
     .startLength = PB_SL,
     .throwNumber = 0,
-    .state = STA
+    .state = STA,
+    .momentPoint = 100
 };
 Player playerC={
     .name = 'C',
@@ -43,7 +46,8 @@ Player playerC={
     .startWidth = PC_SW,
     .startLength = PC_SL,
     .throwNumber = 0,
-    .state = STA
+    .state = STA,
+    .momentPoint = 100
 };
 void printD(char buffer[]){
     if(DEBUG == 1){
@@ -476,7 +480,7 @@ int randomValue(int min , int max){
 }
 int addMomentPoint(){
     srand(SEED);
-    int validBlocks = 750 - inValidBlock;
+    int validBlocks = 751 - inValidBlock;
     Cell freeCell[validBlocks];
     int index =0;
     for(int x=0;x <3;x++){
@@ -490,6 +494,7 @@ int addMomentPoint(){
             }
         }
     }
+    printf("Actual free count %d and assumption %d \n ", index + 1,validBlocks);
     for (int i = 0; i < validBlocks; i++)
     {
         int j = randomValue(0,validBlocks -1);
@@ -508,42 +513,71 @@ int addMomentPoint(){
     {   
         Cell temp = freeCell[i];
         Cell* currentCell = cell(temp.floor,temp.width,temp.length);
-        currentCell->momentPoint = 0;
-        currentCell->pointType = NONE;
+        if(currentCell != NULL){
+            currentCell->momentPoint = 0;
+            currentCell->pointType = NONE;
+        }
+        
     }
     //consumable value 1 to 4
     for (int i = part1 ; i < part1 + part2; i++)
     {   
         Cell temp = freeCell[i];
         Cell* currentCell = cell(temp.floor,temp.width,temp.length);
-        currentCell->momentPoint = randomValue(1,4);
-        currentCell->pointType = DECREASE;
+        if(currentCell != NULL){
+            currentCell->momentPoint = randomValue(1,4);
+            currentCell->pointType = DECREASE;
+        }
+        
     }
     //bonus 1 to 2
     for (int i = (part1 + part2); i < (part1 + part2 + part3); i++)
     {   
         Cell temp = freeCell[i];
         Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        if(currentCell != NULL){
         currentCell->momentPoint = randomValue(1,2);
         currentCell->pointType = ADD;
+        }
     }
     //bonus 3 to 5
     for (int i = (part1 + part2 + part3); i < (part1 + part2 + part3+ part4); i++)
     {   
         Cell temp = freeCell[i];
         Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        if(currentCell != NULL){
         currentCell->momentPoint = randomValue(3,5);
         currentCell->pointType = ADD;
+        }
     }
     //bonus 2 to 3 multiply
     for (int i = (part1 + part2 + part3+ part4); i <(part1 + part2 + part3+ part4 + part5); i++)
     {   
         Cell temp = freeCell[i];
         Cell* currentCell = cell(temp.floor,temp.width,temp.length);
+        if(currentCell != NULL){
         currentCell->momentPoint = randomValue(2,3);
         currentCell->pointType = MULTIPLY;
+        }
     }
-
+    if(DEBUG == 1){
+        const char *typeNames[] = {
+        "ADD" , "DECREASE" , "MULTIPLY" , "NONE"
+        };
+        int count = 1;
+        for(int x=0;x <3;x++){
+        for (int i = 0; i < 10; i++) {
+            for (int j = 0; j < 25; j++) {
+                Cell temp = floors[x][i][j];
+                
+                    printf("%d %d %s ",count,temp.momentPoint,typeNames[temp.pointType]);
+                    count++;
+                
+            }
+        }
+    }
+    }
+    
     
 }
 int initializeFloor(){
@@ -744,7 +778,27 @@ Cell handlePoleStair(Cell currentCell,int s_id, Player *player,int* count){
 
     return currentCell;    
 }
-int checkMoment(Player* player ,short steps){
+int calculateMomentPoint(Cell *cell,int currentPoint){
+    switch (cell->momentPoint)
+    {
+    case ADD:
+        /* code */
+        currentPoint += cell->momentPoint;
+        break;
+    case DECREASE:
+        currentPoint -= cell->momentPoint;
+        break;
+    case MULTIPLY:
+        currentPoint = currentPoint * cell->momentPoint;
+        break;
+    case NONE:
+        break;
+    default:
+        break;
+    }
+    return currentPoint;
+}
+int checkMoment(Player* player ,short steps,short d){
     short floor = player->floor;
     short width = player->width;
     short length = player->length;
@@ -752,6 +806,7 @@ int checkMoment(Player* player ,short steps){
     short pastFloor = floor;
     short pastWidth = width;
     short pastLength = length;
+    int momentPoint = player->momentPoint;
     //printf("past width %d past length %d \n",pastWidth,pastLength);
     //printf("check moment \n");
     const char *directionNames[] = {
@@ -783,35 +838,39 @@ int checkMoment(Player* player ,short steps){
         Cell* checkCell = cell(floor,width,length);
         if (checkCell == NULL || checkCell->type == BLOCK)
         {
-            printD("null \n");
-            //printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at (%d,%d)\n",name,diceNumber,directionNames[direction],pastWidth,pastLength);
+            printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at [ %d , %d ]\n",player->name,steps,directionNames[player->direction],player->width,player->length);
             return 1 ;
-        }else if(checkCell->type == WALL){
-            //blocked by wall
-            //printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at (%d,%d)\n",name,diceNumber,directionNames[direction],pastWidth,pastLength);
-            printf("wall \n");
-            return 1;
-        }else if(checkCell->type == START){
-            return 1;
-        }else{
-                Cell newCell;
-                newCell.type = FREE;
-            
-             if(checkCell->isPole == 1 || checkCell->isStair >0){
-                newCell = handlePoleStair(*checkCell,0,player,&count);
-
-                if(newCell.type != BLOCK){
-                    floor = newCell.floor;
-                    width = newCell.width;
-                    length = newCell.length;
-                }
-                if(newCell.type == BLOCK){
-                    return 1;
-                }
-             }
-
-
         }
+        if(checkCell->type == WALL){
+            //blocked by wall
+            printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at [ %d , %d ]\n",player->name,steps,directionNames[player->direction],player->width,player->length);
+            
+            return 1;
+        } 
+        if(checkCell->type == START){
+            printf("Player %c rolls and %d on the movement dice and cannot move in the %s. Player remains at [ %d , %d ]\n",player->name,steps,directionNames[player->direction],player->width,player->length);
+            
+            return 1;
+        }
+        Cell newCell;
+        newCell.type = FREE;
+        printD("Check pole or stair part\n");   
+        if(checkCell->isPole == 1 || checkCell->isStair >0){
+            newCell = handlePoleStair(*checkCell,0,player,&count);
+            
+            if(newCell.type != BLOCK){
+                floor = newCell.floor;
+                width = newCell.width;
+                length = newCell.length;
+            }
+            if(newCell.type == BLOCK){
+                return 1;
+            }
+        }
+        momentPoint = calculateMomentPoint(checkCell,momentPoint);
+        
+
+        
         
         
 
@@ -819,29 +878,76 @@ int checkMoment(Player* player ,short steps){
     player->floor = floor;
     player->width = width;
     player->length = length;
+    
+    if(d == 0){
+        printf("Player %c rolls and %d on the movement dice and moves %s by %d cells and is now at [ %d , %d ] \n",player->name,steps,directionNames[player->direction],steps,player->width,player->length);
+    }else if(d == 1){
+        printf("Player %c rolls and %d on the movement dice and %s on the direction dice, changes direction to %s and moves %d cells and is now at [ %d , %d ].\n",player->name,steps,directionNames[player->direction],directionNames[player->direction],steps,player->width,player->length);
+    }
+    if(d == 0 || d == 1){
+        printf("Player %c moved %d that cost %d movement points and is left with %d and is moving in the  %s\n", player->name,steps,(momentPoint - player->momentPoint),momentPoint,directionNames[player->direction]);
+    }
+    player->momentPoint = (momentPoint > MP_LIMIT) ? MP_LIMIT : momentPoint;
     return 0;
 }
-
-int addMoment(Player * player,short diceNumber){
-    checkMoment(player , diceNumber);
+enum Direction findDirection(Player *player,short dice){
+    switch(dice){
+        case 1:
+            return player->direction;
+          break;
+        case 2:
+            return NORTH;
+            break;
+        case 3:
+            return EAST;
+            break;
+        case 4:
+            return SOUTH;
+            break;
+        case 5:
+            return WEST;
+            break;
+        case 6:
+            return player->direction;
+            break;
+        default:
+            break; 
+    }
+}
+int addMoment(Player * player,short diceNumber,short d){
+    checkMoment(player , diceNumber,d);
 }
 int playerMoment(Player* player){
-
+    printf("Player --  %c --\n",player->name);
     //if player in start area
     if(player->state == STA){
         short diceNumber = randomValue(1,6);
         if(diceNumber == 6){
-            addMoment(player,1);
+            addMoment(player,1,3);
             player->state = NORMAL;
             printf("Player %c is at the starting area and rolls 6 on the movement dice and is placed on  [ %d , %d ] of the maze.\n",player->name,player->width,player->length);
         }else{
             printf("Player %c is at the starting area and rolls %d on the movement dice cannot enter the maze.\n",player->name,diceNumber);
         }
+    }else if(player->state == NORMAL){
+        if(player->throwNumber == 4){
+            short dice = randomValue(1,6);
+            short directionDice = randomValue(1,6);
+            player->direction = findDirection(player,directionDice);
+            addMoment(player,dice,1);
+            player->throwNumber=0;
+        }else{
+            short dice = randomValue(1,6);
+            addMoment(player,dice,0);
+            player->throwNumber++;
+
+        }
+
     }
 }
 int play(){
     int count = 1;
-    while(count < 10){
+    while(count < 5000){
         printf("----------------ROUND  %d  ------------\n",count);
         playerMoment(&playerA);
         playerMoment(&playerB);
