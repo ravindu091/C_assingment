@@ -4,7 +4,7 @@
 #include "structure.h"
 #include "data.h"
 
-#define SEED 145
+#define SEED 1
 #define DEBUG 0
 #define MP_LIMIT 250
 char deBuf[100];
@@ -581,6 +581,52 @@ int addMomentPoint(){
     
     
 }
+// Go to Bawana
+Bawana bawana[3][4];
+void initialBawana(){
+    Bawana *temp[12];
+    short index = 0;
+    for(int i = 0; i < 3; i++){
+        for(int j = 0; j <4; j++){
+            temp[index] = &bawana[i][j];
+            temp[index]->length = 21+j;
+            temp[index]->width = 7+i;
+            
+            printf("Bawana %d %d  and index %d\n",temp[index]->width ,temp[index]->length,index);
+            index++;
+        }
+    }
+    //shuffle
+    for(int i = 0; i < 12;i++){
+        short random = randomValue(0,11);
+        Bawana *tempCell = temp[i];
+        temp[i] = temp[random];
+        temp[random] = tempCell;
+
+    }
+    //random
+    int value[8] = { 0, 3, 1,50,2,50,4,200};
+    int count = 0;
+    for(int i = 0; i < 4;i++){
+        temp[count]->type = value[count];
+        temp[count]->point = value[count+1];
+        temp[count+1]->type = value[count];
+        temp[count+1]->point = value[count+1];
+        count += 2;
+    } 
+    for(int i = 8;i<12;i++){
+        temp[i]->type = NO;
+        temp[i]->point = randomValue(1,100);
+    }
+    if(DEBUG == 1){
+        printf("\nFinal Bawana assignments:\n");
+        for(int i = 0; i < 12; i++){
+            printf("Bawana[%d]: Position(%d,%d), Type:%d, Points:%d\n", 
+                   i, temp[i]->width, temp[i]->length, temp[i]->type, temp[i]->point);
+        }
+    }
+
+}
 int initializeFloor(){
     //initialize all cells
     initializeAllCells();
@@ -602,6 +648,7 @@ int initializeFloor(){
     loadFlag();
     Cell *ptr = cell(0,9,9);
     printf(" where %d \n", ptr->type);
+    initialBawana();
 
 }
 Pole * findPole(short floor,short width,short length){
@@ -781,9 +828,28 @@ Cell handlePoleStair(Cell currentCell,int s_id, Player *player,int* count){
 }
 //Stair direction change
 void stairDirectionChange(){
-
+    printf("-------------- Direction Changed ---------------\n");
+    char *directionName[] = {
+        "UP","DOWN","BOTH"
+    };
+    Stair *head = stairHead;
+    while(head != NULL){
+        if(head != NULL){
+            head->direction = randomValue(0,2);
+            printf("Direction change stair ID %d change Direction to %s \n",head->id,directionName[head->direction]);
+        }
+        head = head->next;
+    }
 }
 
+
+void goToBawana(Player *player,short width,short length,int type){
+    Cell currentCell = *cell(0,width,length);
+
+    if(type == 1){
+
+    }
+}
 int calculateMomentPoint(Cell *cell){
     int point = 1;
     switch (cell->momentPoint)
@@ -978,5 +1044,5 @@ int initialize(){
     FILE *fp = fopen("log.txt","w");
     fclose(fp);
     initializeFloor();
-    play();
+    //play();
 }

@@ -13,6 +13,9 @@ enum StairDirection{
 enum PlayerState{
     STA,NORMAL,SPECIAL
 };
+enum BawanaType{
+    FOOD,DISORIENTED,TRIGGERED,HAPPY,NO 
+};
 typedef struct{
     enum Direction direction;
     char name;
@@ -75,3 +78,10 @@ typedef struct Flag{
     short width;
     short length;
 } Flag;
+
+typedef struct Bawana {
+    short width;
+    short length;
+    enum BawanaType type;
+    short point;
+}Bawana;
