@@ -16,7 +16,11 @@ enum PlayerState{
 enum BawanaType{
     FOOD,DISORIENTED,TRIGGERED,HAPPY,NO 
 };
+enum CurrentPlayer{
+    NP , A, B,C
+};
 typedef struct{
+    const short position;
     enum Direction direction;
     char name;
     char floor;
@@ -28,6 +32,9 @@ typedef struct{
     const short startFloor;
     const short startWidth;
     const short startLength;
+    short isFood;
+    short isDisoriented;
+    short isTriggered;
     int momentPoint;
 
 } Player;
@@ -41,6 +48,7 @@ typedef struct{
     short isStair;
     short momentPoint;
     enum PointType pointType;
+    enum CurrentPlayer currentPlayer;
 
 } Cell;
 

@@ -4,13 +4,23 @@
 #include "structure.h"
 #include "data.h"
 
-#define SEED 1
+#define FOOD_POISON 3
+#define DISORIENTED_TIME 4
+#define TRIGGERED_TIME 4
+//bawana entrance
+#define ENTRANCE_FLOOR 0
+#define ENTRANCE_WIDTH 9
+#define ENTRANCE_LENGTH 19
+
+
+#define SEED 10
 #define DEBUG 0
 #define MP_LIMIT 250
 char deBuf[100];
 
 Cell floors[3][10][25];
 Player playerA={
+    .position = 0,
     .name = 'A',
     .direction = PA_SD,
     .floor = 0,
@@ -21,9 +31,13 @@ Player playerA={
     .startLength = PA_SL,
     .throwNumber = 0,
     .state = STA,
-    .momentPoint = 100
+    .momentPoint = 100,
+    .isDisoriented=0,
+    .isFood=0,
+    .isTriggered=0,
 };
 Player playerB={
+    .position = 1,
     .name = 'B',
     .direction = PB_SD,
     .floor = 0,
@@ -34,9 +48,13 @@ Player playerB={
     .startLength = PB_SL,
     .throwNumber = 0,
     .state = STA,
-    .momentPoint = 100
+    .momentPoint = 100,
+    .isDisoriented=0,
+    .isFood=0,
+    .isTriggered=0,
 };
 Player playerC={
+    .position = 2,
     .name = 'C',
     .direction = PC_SD,
     .floor = 0,
@@ -47,7 +65,10 @@ Player playerC={
     .startLength = PC_SL,
     .throwNumber = 0,
     .state = STA,
-    .momentPoint = 100
+    .momentPoint = 100,
+    .isDisoriented=0,
+    .isFood=0,
+    .isTriggered=0,
 };
 void printD(char buffer[]){
     if(DEBUG == 1){
@@ -55,7 +76,9 @@ void printD(char buffer[]){
     printf("%s \n", buffer);
     }
 }
-
+Player *playerList[]={
+    &playerA , &playerB, &playerC
+};
 //stair
 Stair* stairHead = NULL;
 int stairCount =0;
@@ -841,14 +864,86 @@ void stairDirectionChange(){
         head = head->next;
     }
 }
+//Handle current player in the cell
+int comparePlayerPosition(Player * player,Player *currentPlayer){
+    if(player->floor == currentPlayer->floor && player->width == currentPlayer->width && player->length == currentPlayer->length){
+        return 1;
+    }
+    return 0;
+}
+int isPlayerOnCell(Player *player){
+    for(int i = 0; i < 3;i++){
+        if(player->position == i){
+            continue;
+        }
+        Player *currentPlayer = playerList[i];
+        int samePosition = comparePlayerPosition(player,currentPlayer);
+        if(samePosition == 1){
+            // send current player to the start cell
+            printf("player %c is capture the Player %c at [ %d , %d ]  on %d floor. So Player %c send to the starting cell\n",player->name,currentPlayer->name,currentPlayer->width,currentPlayer->length,currentPlayer->floor,currentPlayer->name);
+            sendStart(currentPlayer);
+            return 1;
+        }
+    }
+    return 0;
+}
 
+//place the entrance cell after visit the bawana
+int placeEntrance(Player *player){
+    Cell *currentCell = cell(ENTRANCE_FLOOR,ENTRANCE_WIDTH,ENTRANCE_LENGTH);
+    if(currentCell == NULL){
+        printD("Can't find the entrance cell");
+        return 1;
+    }
+    int count =0;
+    Cell newCell = handlePoleStair(*currentCell,0,player,&count);
+            
+    if(newCell.type != BLOCK){
+        player->floor = newCell.floor;
+        player->width = newCell.width;
+        player->length = newCell.length;
+        isPlayerOnCell(player);
+        return 1;
+    }
+    if(newCell.type == BLOCK){
+        return 1;
+    }
+    player->floor = ENTRANCE_FLOOR;
+    player->width = ENTRANCE_WIDTH;
+    player->length = ENTRANCE_LENGTH;
+    isPlayerOnCell(player);
+}
+//Go to BAWANA function
+void goToBawana(Player *player,short width,short length){
 
-void goToBawana(Player *player,short width,short length,int type){
     Cell currentCell = *cell(0,width,length);
-
-    if(type == 1){
+    Bawana *bawanaCell = &bawana[width-7][length-21];
+    if(bawanaCell != NULL){
+        switch(bawanaCell->type){
+            case FOOD:
+                player->isFood += FOOD_POISON;
+                //after place randomly in to bawana
+                break;
+            case DISORIENTED:
+                player->isDisoriented += DISORIENTED_TIME;
+                player->momentPoint += bawanaCell->point;
+                placeEntrance(player);
+                break;
+            case TRIGGERED:
+                player->isTriggered += TRIGGERED_TIME;
+                player->momentPoint += bawanaCell->point;
+                placeEntrance(player);
+                break;
+            case HAPPY:
+                player->momentPoint += bawanaCell->point;
+                placeEntrance(player);
+                break;
+            default:
+                break;
+        }
 
     }
+    
 }
 int calculateMomentPoint(Cell *cell){
     int point = 1;
@@ -942,17 +1037,21 @@ int checkMoment(Player* player ,short steps,short d){
                 floor = newCell.floor;
                 width = newCell.width;
                 length = newCell.length;
+                Cell *droppedCell = cell(floor,width,length);
+                //if player stepped on th bawana
+                if(droppedCell != NULL){
+                    if(droppedCell->type == BAWANA){
+                    printf("Player %c is place on a[ %d , %d ]  and effects take place." , player->name,player->width,player->length);
+                    goToBawana(player,droppedCell->width,droppedCell->length);
+                    return 0;
+                    }
+                }
             }
             if(newCell.type == BLOCK){
                 return 1;
             }
         }
         momentPoint = calculateMomentPoint(checkCell);
-        
-
-        
-        
-        
 
     }
     player->floor = floor;
@@ -1044,5 +1143,5 @@ int initialize(){
     FILE *fp = fopen("log.txt","w");
     fclose(fp);
     initializeFloor();
-    //play();
+    play();
 }
