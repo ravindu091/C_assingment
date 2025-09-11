@@ -8,9 +8,13 @@ int main(){
     printf("\n\n\n\n\n");
     //checkMoment(NORTH,1,6,1,6,'A',0);
     printf("test stair \n");
-    checkMoment(SOUTH,0,1,4,5,'A',0);
+    playerA.floor = 2;
+    playerA.direction= WEST;
+    playerA.width = 9;
+    playerA.length = 10;
+    checkMoment(&playerA,5);
 
-    printf("find distance %d \n",findDistance(5,4));
-    printf("find distance %d \n",findDistance(3,5));
+    //printf("find distance %d \n",findDistance(5,4));
+    //printf("find distance %d \n",findDistance(3,5));
     
 }

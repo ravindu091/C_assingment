@@ -1,5 +1,8 @@
 {
     "cSpell.words": [
         "BAWANA"
-    ]
+    ],
+    "files.associations": {
+        "typeinfo": "c"
+    }
 }
