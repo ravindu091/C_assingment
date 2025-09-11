@@ -71,3 +71,87 @@ NextCell handleStair(Cell *currentCell, int id) {
     NextCell invalid = { .isValid = 0 };
     return invalid;
 }
+if(floor != 0 && checkCell->isPole == 1){
+                Pole *pole = findPole(width,length);
+                if(pole->startFloor != floor){
+                    printf("we have pole %d %d %d\n",floor,width,length);
+                    int result = checkMoment(direction,pole->startFloor,width,length,steps - (i+1),name,s_id);
+                    if(result == 1){
+                        //can,t use pole
+                        s_id = 0;
+                        printf("Pole can't use\n");
+                        return 1;
+                    }else if(result == 0){
+                        floor = pole->startFloor;
+                        printf("pole can use \n");
+                        printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",name,width,length,name,width,length,floor);
+                    }
+                    
+                    //stepped on a pole~
+                }
+            }
+            printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",name,width,length,name,width,length,floor);
+            if(floor != 0 && checkCell->isPole == 1){
+                Pole *pole = findPole(width,length);
+                if(pole->startFloor != floor){
+                    printf("we have pole %d %d %d\n",floor,width,length);
+                    int result = checkMoment(direction,pole->startFloor,width,length,steps - (i+1),name,s_id);
+                    if(result == 1){
+                        //can,t use pole
+                        s_id = 0;
+                        printf("Pole can't use\n");
+                        return 1;
+                    }else if(result == 0){
+                        floor = pole->startFloor;
+                        printf("pole can use \n");
+                        printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",name,width,length,name,width,length,floor);
+                    }
+                    
+                    //stepped on a pole~
+                }
+            }if(floor != 0 && checkCell->isPole == 1){
+                Pole *pole = findPole(width,length);
+                if(pole->startFloor != floor){
+                    printf("we have pole %d %d %d\n",floor,width,length);
+                    int result = checkMoment(direction,pole->startFloor,width,length,steps - (i+1),name,s_id);
+                    if(result == 1){
+                        //can,t use pole
+                        s_id = 0;
+                        printf("Pole can't use\n");
+                        return 1;
+                    }else if(result == 0){
+                        floor = pole->startFloor;
+                        printf("pole can use \n");
+                        printf("Player %c lands on (%d,%d) which is a pole cell. \nPlayer %c slides down and now placed at (%d,%d) infloor %d.\n",name,width,length,name,width,length,floor);
+                    }
+                    
+                    //stepped on a pole~
+                }
+            }
+            if(checkCell->isStair > 0){
+                if(pastFloor == floor){
+                printD("find a stair in");
+                NextCell nextCell = handleStair(checkCell,s_id);
+                if(nextCell.isValid == 1){
+                    printf("check stair...\n");
+                    int result = checkMoment(direction,nextCell.floor,nextCell.width,nextCell.length,steps - (i+1),name,nextCell.id);
+                    //s_id=nextCell.id;
+                    if(result == 1){
+                        //cant use stair
+                        printf("cant use stair \n");
+                        s_id = 0;
+                    }else{
+                        pastWidth = width;
+                        pastLength = length;
+                        floor = nextCell.floor;
+                        width = nextCell.width;
+                        length = nextCell.length;
+                        
+                        printf("Player %c lands on [%d , %d] which is a stair cell.\nPlayer %c takes the stairs and now placed at [%d , %d]in floor %d.\n",name,pastWidth,pastLength,name,width,length,floor);
+                    }
+                }else{
+                    s_id=0;
+                }
+
+            }
+            }

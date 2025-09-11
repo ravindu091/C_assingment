@@ -4,7 +4,7 @@
 #include "structure.h"
 #include "data.h"
 
-#define SEED 12345
+#define SEED 145
 #define DEBUG 0
 #define MP_LIMIT 250
 char deBuf[100];
@@ -472,6 +472,7 @@ int loadFlag(){
         flag.floor = floor;
         flag.width = width;
         flag.length = length;
+        currentCell->type = FLAG;
     }
 }
 int randomValue(int min , int max){
@@ -778,25 +779,31 @@ Cell handlePoleStair(Cell currentCell,int s_id, Player *player,int* count){
 
     return currentCell;    
 }
-int calculateMomentPoint(Cell *cell,int currentPoint){
+//Stair direction change
+void stairDirectionChange(){
+
+}
+
+int calculateMomentPoint(Cell *cell){
+    int point = 1;
     switch (cell->momentPoint)
     {
     case ADD:
         /* code */
-        currentPoint += cell->momentPoint;
+        point += cell->momentPoint;
         break;
     case DECREASE:
-        currentPoint -= cell->momentPoint;
+        point -= cell->momentPoint;
         break;
     case MULTIPLY:
-        currentPoint = currentPoint * cell->momentPoint;
+        point = point * cell->momentPoint;
         break;
     case NONE:
         break;
     default:
         break;
     }
-    return currentPoint;
+    return point;
 }
 int checkMoment(Player* player ,short steps,short d){
     short floor = player->floor;
@@ -852,6 +859,13 @@ int checkMoment(Player* player ,short steps,short d){
             
             return 1;
         }
+        if(checkCell->type == FLAG){
+            printf("------------ GAME OVER -----------\n");
+            printf("Player %c capture the flag at [ %d , %d ] on floor %d \n",player->name,length,width,floor);
+            printf("Game over \n");
+            exit(1);
+        }
+
         Cell newCell;
         newCell.type = FREE;
         printD("Check pole or stair part\n");   
@@ -867,7 +881,7 @@ int checkMoment(Player* player ,short steps,short d){
                 return 1;
             }
         }
-        momentPoint = calculateMomentPoint(checkCell,momentPoint);
+        momentPoint = calculateMomentPoint(checkCell);
         
 
         
@@ -885,9 +899,9 @@ int checkMoment(Player* player ,short steps,short d){
         printf("Player %c rolls and %d on the movement dice and %s on the direction dice, changes direction to %s and moves %d cells and is now at [ %d , %d ].\n",player->name,steps,directionNames[player->direction],directionNames[player->direction],steps,player->width,player->length);
     }
     if(d == 0 || d == 1){
-        printf("Player %c moved %d that cost %d movement points and is left with %d and is moving in the  %s\n", player->name,steps,(momentPoint - player->momentPoint),momentPoint,directionNames[player->direction]);
+        printf("Player %c moved %d that cost %d movement points and is left with %d and is moving in the  %s\n", player->name,steps,(0 - momentPoint),player->momentPoint + momentPoint,directionNames[player->direction]);
     }
-    player->momentPoint = (momentPoint > MP_LIMIT) ? MP_LIMIT : momentPoint;
+    player->momentPoint = (player->momentPoint + momentPoint > MP_LIMIT) ? MP_LIMIT : player->momentPoint + momentPoint;
     return 0;
 }
 enum Direction findDirection(Player *player,short dice){
@@ -947,11 +961,14 @@ int playerMoment(Player* player){
 }
 int play(){
     int count = 1;
-    while(count < 5000){
+    while(1){
         printf("----------------ROUND  %d  ------------\n",count);
         playerMoment(&playerA);
         playerMoment(&playerB);
         playerMoment(&playerC);
+        if(count % 5 == 0){
+            stairDirectionChange();
+        }
         count++;
 
         printf("\n");
